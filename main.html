@@ -3,61 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>MediScript Pro | Doctor E‑Prescription</title>
+    <title>DoctorDesk | E-Prescription</title>
     <!-- QR Code library -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <!-- html2pdf for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
-        /* ---------- Berlin Sans FB Demi font ---------- */
-        @font-face {
-            font-family: 'Berlin Sans FB Demi';
-            src: local('Berlin Sans FB Demi'), local('BerlinSansFBDemi'), url('https://fonts.cdnfonts.com/s/14867/Berlin Sans FB Demi.woff') format('woff');
-            font-weight: normal;
-            font-style: normal;
-        }
+        /* ---------- Times New Roman font ---------- */
         * {
-            font-family: 'Berlin Sans FB Demi', 'Berlin Sans FB', 'Arial', 'Segoe UI', sans-serif;
-            transition: background 0.2s, color 0.2s;
+            font-family: 'Times New Roman', Times, serif;
+            transition: all 0.2s ease;
         }
         /* Light / Dark variables */
         :root {
-            --bg: #f0f4f8;
-            --card: #ffffff;
-            --text: #1e293b;
-            --border: #cbd5e1;
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --danger: #dc2626;
-            --success: #10b981;
-            --muted: #64748b;
+            --bg: linear-gradient(135deg, #e0f7fa 0%, #e8f5e9 100%);
+            --card: rgba(255, 255, 255, 0.95);
+            --text: #1a2a3a;
+            --border: #c8e6e9;
+            --primary: #0277bd;
+            --primary-dark: #01579b;
+            --danger: #d32f2f;
+            --success: #2e7d32;
+            --muted: #546e7a;
+            --accent: #ffb300;
         }
         body.dark {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --text: #e2e8f0;
-            --border: #334155;
-            --primary: #3b82f6;
-            --primary-dark: #60a5fa;
-            --muted: #94a3b8;
+            --bg: linear-gradient(135deg, #1e2a3a 0%, #0f1a24 100%);
+            --card: #1e2a36;
+            --text: #f0f4f8;
+            --border: #2c3e44;
+            --primary: #4fc3f7;
+            --primary-dark: #29b6f6;
+            --muted: #b0bec5;
         }
         body {
             background: var(--bg);
             color: var(--text);
             margin: 0;
             padding: 20px;
+            min-height: 100vh;
+            animation: bgShift 12s infinite alternate;
+        }
+        @keyframes bgShift {
+            0% { background-size: 100% 100%; }
+            100% { background-size: 120% 120%; }
         }
         .container {
             max-width: 1400px;
             margin: 0 auto;
         }
+        /* animated hospital images background (floating) */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .animated-bg img {
+            position: absolute;
+            opacity: 0.15;
+            animation: float 20s infinite ease-in-out;
+            width: 180px;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
         .card {
             background: var(--card);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-            border: 1px solid var(--border);
+            border-radius: 32px;
+            padding: 28px;
+            margin-bottom: 28px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.2);
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,255,0.3);
         }
         .flex {
             display: flex;
@@ -69,153 +93,160 @@
         .grid-2 {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            gap: 24px;
         }
         input, select, textarea, button {
             background: var(--card);
             border: 1px solid var(--border);
             color: var(--text);
-            border-radius: 12px;
-            padding: 10px 14px;
-            font-size: 14px;
+            border-radius: 24px;
+            padding: 12px 18px;
+            font-size: 16px;
             outline: none;
+            font-weight: bold;
         }
         button {
-            background: var(--primary);
+            background: linear-gradient(95deg, var(--primary), var(--primary-dark));
             color: white;
             border: none;
             cursor: pointer;
             font-weight: bold;
-            padding: 10px 18px;
+            padding: 12px 24px;
             border-radius: 40px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
         }
+        button:active { transform: scale(0.97); }
         button.secondary {
-            background: var(--muted);
+            background: linear-gradient(95deg, var(--muted), #2c3e50);
         }
         button.danger {
-            background: var(--danger);
+            background: linear-gradient(95deg, var(--danger), #b71c1c);
         }
         table {
             width: 100%;
             border-collapse: collapse;
+            border-radius: 24px;
+            overflow: hidden;
         }
         th, td {
             border-bottom: 1px solid var(--border);
-            padding: 12px 8px;
+            padding: 14px 8px;
             text-align: left;
         }
         .nav-bar {
             background: var(--card);
             border-radius: 60px;
-            padding: 10px 24px;
+            padding: 12px 28px;
             margin-bottom: 30px;
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
             justify-content: space-between;
             align-items: center;
-        }
-        .btn-icon {
-            background: none;
-            color: var(--text);
-            font-size: 20px;
-            padding: 6px 12px;
-        }
-        .prescription-box {
-            background: white;
-            color: black;
-            padding: 30px;
-            border-radius: 16px;
-            margin-top: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
         .hidden {
             display: none;
         }
         .medicine-row, .test-row {
-            background: var(--bg);
-            padding: 10px;
-            border-radius: 16px;
-            margin-bottom: 12px;
+            background: rgba(0,0,0,0.03);
+            padding: 15px;
+            border-radius: 28px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .medicine-row input, .medicine-row select {
+            flex: 1;
+            min-width: 100px;
         }
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            .print-area, .print-area * {
-                visibility: visible;
-            }
-            .print-area {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                background: white;
-                color: black;
-            }
-            .no-print {
-                display: none;
-            }
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { position: absolute; top: 0; left: 0; width: 100%; background: white; color: black; }
+            .no-print { display: none; }
+        }
+        .prescription-box {
+            background: white;
+            color: black;
+            padding: 30px;
+            border-radius: 24px;
+        }
+        .welcome-text {
+            background: linear-gradient(120deg, var(--accent), #ff8c00);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
     </style>
 </head>
 <body>
+<div class="animated-bg">
+    <img src="https://cdn-icons-png.flaticon.com/512/2922/2922561.png" style="top:10%; left:5%; width:140px;" alt="hospital">
+    <img src="https://cdn-icons-png.flaticon.com/512/4227/4227992.png" style="bottom:15%; right:3%; width:180px; animation-delay: -5s;" alt="ambulance">
+    <img src="https://cdn-icons-png.flaticon.com/512/1998/1998613.png" style="top:40%; left:80%; width:150px; animation-duration: 25s;" alt="doctor">
+    <img src="https://cdn-icons-png.flaticon.com/512/3096/3096988.png" style="bottom:5%; left:20%; width:130px; animation-duration: 18s;" alt="stethoscope">
+</div>
 <div class="container" id="app">
-    <!-- LOGIN + SIGNUP VIEWS -->
+    <!-- AUTH VIEW -->
     <div id="authView">
-        <div class="card" style="max-width: 500px; margin: 40px auto;">
-            <h2 style="text-align:center;">🏥 MediScript Pro</h2>
+        <div class="card" style="max-width: 550px; margin: 60px auto; text-align:center;">
+            <h1 style="font-size: 3rem; margin:0;">🏥 DoctorDesk</h1>
+            <p>Smart E-Prescription for Modern Clinics</p>
             <div class="flex" style="justify-content:center;">
-                <button id="showLoginBtn" class="primary">Login</button>
+                <button id="showLoginBtn" style="background:#0277bd;">Login</button>
                 <button id="showSignupBtn" class="secondary">Sign up</button>
             </div>
             <div id="loginForm">
-                <h3>Doctor Login</h3>
-                <input type="email" id="loginEmail" placeholder="Email" autocomplete="off"><br><br>
+                <h3>🔐 Doctor Login</h3>
+                <input type="email" id="loginEmail" placeholder="Email"><br><br>
                 <input type="password" id="loginPassword" placeholder="Password"><br><br>
-                <button id="doLogin">Login</button>
+                <button id="doLogin">Login to Dashboard</button>
             </div>
             <div id="signupForm" style="display:none;">
-                <h3>Doctor Registration</h3>
+                <h3>📝 Register New Doctor</h3>
                 <input type="text" id="docName" placeholder="Full Name"><br><br>
-                <input type="text" id="docRegNo" placeholder="Medical Registration Number"><br><br>
+                <input type="text" id="docRegNo" placeholder="Medical Reg Number"><br><br>
                 <input type="text" id="docSpecial" placeholder="Specialization"><br><br>
                 <input type="text" id="docClinic" placeholder="Clinic/Hospital Name"><br><br>
                 <input type="email" id="docEmail" placeholder="Email"><br><br>
                 <input type="tel" id="docPhone" placeholder="Phone"><br><br>
                 <input type="password" id="docPassword" placeholder="Password"><br><br>
-                <button id="doSignup">Register</button>
+                <button id="doSignup">Create Account</button>
             </div>
         </div>
     </div>
 
-    <!-- DASHBOARD (shown after login) -->
+    <!-- DASHBOARD (after login) -->
     <div id="dashboardView" style="display:none;">
         <div class="nav-bar">
-            <h2>📋 MediScript Dashboard</h2>
+            <h2>🏥 DoctorDesk <span style="font-size:0.8rem;">| e‑Prescription</span></h2>
             <div class="flex">
-                <button id="navNewRx">➕ New Rx</button>
-                <button id="navHistory">📜 Prescriptions</button>
+                <button id="navNewRx">➕ New Prescription</button>
+                <button id="navHistory">📜 History</button>
                 <button id="navPatients">👥 Patients</button>
-                <button id="navAppointments">📅 Appointments</button>
                 <button id="navProfile">⚙️ Profile</button>
                 <button id="darkModeToggle">🌓 Dark/Light</button>
                 <button id="logoutBtn" class="danger">🚪 Logout</button>
             </div>
         </div>
 
-        <!-- DASHBOARD SECTIONS -->
+        <!-- NEW PRESCRIPTION SECTION -->
         <div id="newRxSection" class="card">
-            <h2>➕ Create New Prescription</h2>
+            <h2 style="color:var(--primary);">✨ Create New Prescription</h2>
             <div class="grid-2">
                 <div>
-                    <label>Search Patient (phone/name)</label>
-                    <input type="text" id="patientSearch" placeholder="Type phone or name">
-                    <button id="searchPatientBtn">Search</button>
+                    <label>🔍 Search Patient (phone/name)</label>
+                    <input type="text" id="patientSearch" placeholder="Enter phone or name">
+                    <button id="searchPatientBtn" style="margin-top:8px;">Search & Fill</button>
                     <div id="searchResult"></div>
                 </div>
             </div>
             <form id="prescriptionForm">
-                <h3>📌 Patient Details</h3>
+                <h3>📋 Patient Details</h3>
                 <div class="grid-2">
                     <input type="text" id="pName" placeholder="Patient name" required>
                     <input type="number" id="pAge" placeholder="Age">
@@ -226,8 +257,8 @@
                 </div>
                 <h3>🩺 Checkup & Vitals</h3>
                 <div class="grid-2">
-                    <textarea id="symptoms" placeholder="Symptoms"></textarea>
-                    <textarea id="diagnosis" placeholder="Diagnosis"></textarea>
+                    <textarea id="symptoms" placeholder="Symptoms" rows="2"></textarea>
+                    <textarea id="diagnosis" placeholder="Diagnosis" rows="2"></textarea>
                     <input type="text" id="bp" placeholder="Blood Pressure">
                     <input type="text" id="temp" placeholder="Temperature">
                     <input type="text" id="weight" placeholder="Weight (kg)">
@@ -236,53 +267,50 @@
                     <textarea id="history" placeholder="Medical history"></textarea>
                 </div>
 
-                <h3>💊 Medicines <button type="button" id="addMedicineBtn" style="padding:5px 12px;">+ Add</button></h3>
+                <h3>💊 Medicines <button type="button" id="addMedicineBtn" style="padding:5px 16px;">+ Add Medicine</button></h3>
                 <div id="medicinesContainer"></div>
 
-                <h3>🧪 Tests Advised <button type="button" id="addTestBtn" style="padding:5px 12px;">+ Test</button></h3>
+                <h3>🧪 Tests Advised <button type="button" id="addTestBtn" style="padding:5px 16px;">+ Test</button></h3>
                 <div id="testsContainer">
-                    <div class="test-row"><input placeholder="Test name" value="Blood test"><button type="button" class="removeTestBtn" style="background:gray;">✖</button></div>
+                    <div class="test-row"><input placeholder="Test name" value="Blood Test"><button type="button" class="removeTestBtn" style="background:gray;">✖</button></div>
                     <div class="test-row"><input placeholder="Test name" value="X-Ray"><button type="button" class="removeTestBtn" style="background:gray;">✖</button></div>
                 </div>
 
                 <h3>📝 Doctor Advice</h3>
-                <textarea id="dietAdvice" placeholder="Diet advice"></textarea>
-                <textarea id="restAdvice" placeholder="Rest / exercise advice"></textarea>
+                <textarea id="dietAdvice" placeholder="Diet advice" rows="2"></textarea>
+                <textarea id="restAdvice" placeholder="Rest / exercise advice" rows="2"></textarea>
                 <input type="date" id="followUp" placeholder="Follow-up date">
-                <textarea id="emergencyNote" placeholder="Emergency warning note"></textarea>
+                <textarea id="emergencyNote" placeholder="Emergency warning note" rows="2"></textarea>
                 <br><br>
-                <button type="submit" style="background:var(--success);">💾 Save Prescription</button>
+                <button type="submit" style="background:var(--success); font-size:1.1rem;">💾 Save Prescription</button>
             </form>
         </div>
 
+        <!-- HISTORY SECTION -->
         <div id="historySection" class="card hidden">
-            <h2>📜 Old Prescriptions</h2>
+            <h2>📜 Past Prescriptions</h2>
             <input type="text" id="historySearch" placeholder="Search by patient name or phone"><br><br>
             <div id="prescriptionsList"></div>
         </div>
 
+        <!-- PATIENTS SECTION -->
         <div id="patientsSection" class="card hidden">
-            <h2>👥 Patient List</h2>
+            <h2>👥 All Patients</h2>
             <div id="patientsList"></div>
         </div>
 
-        <div id="appointmentsSection" class="card hidden">
-            <h2>📅 Appointments</h2>
-            <button id="newApptBtn">+ New Appointment</button>
-            <div id="appointmentsList"></div>
-        </div>
-
+        <!-- PROFILE SECTION -->
         <div id="profileSection" class="card hidden">
             <h2>👨‍⚕️ Doctor Profile</h2>
             <div id="profileInfo"></div>
-            <button id="editProfileBtn">Edit</button>
+            <button id="editProfileBtn">Edit Profile</button>
         </div>
 
-        <!-- PRESCRIPTION VIEW MODAL / DETAIL -->
-        <div id="prescriptionViewModal" class="card hidden" style="position:fixed; top:10%; left:5%; right:5%; z-index:1000; overflow:auto; max-height:80%;">
+        <!-- PRESCRIPTION MODAL (view, pdf, print) -->
+        <div id="prescriptionViewModal" class="card hidden" style="position:fixed; top:5%; left:5%; right:5%; z-index:2000; overflow:auto; max-height:85%;">
             <div id="prescriptionOutput" class="print-area"></div>
-            <div class="flex no-print">
-                <button id="downloadPDFBtn">📄 Download PDF</button>
+            <div class="flex no-print" style="justify-content:center; margin-top:20px;">
+                <button id="downloadPDFBtn">📄 PDF</button>
                 <button id="printRxBtn">🖨️ Print</button>
                 <button id="sendEmailBtn">📧 Send to Patient</button>
                 <button id="closeModalBtn">Close</button>
@@ -292,26 +320,23 @@
 </div>
 
 <script>
-    // ---------- Data helpers (localStorage) ----------
+    // ---------- DATA (localStorage) ----------
     let currentDoctor = null;
     let doctors = JSON.parse(localStorage.getItem('doctors') || '[]');
     let prescriptions = JSON.parse(localStorage.getItem('prescriptions') || '[]');
     let patients = JSON.parse(localStorage.getItem('patients') || '[]');
-    let appointments = JSON.parse(localStorage.getItem('appointments') || '[]');
 
     function saveAll() {
         localStorage.setItem('doctors', JSON.stringify(doctors));
         localStorage.setItem('prescriptions', JSON.stringify(prescriptions));
         localStorage.setItem('patients', JSON.stringify(patients));
-        localStorage.setItem('appointments', JSON.stringify(appointments));
     }
 
     function showSection(sectionId) {
-        document.querySelectorAll('#newRxSection, #historySection, #patientsSection, #appointmentsSection, #profileSection').forEach(s => s.classList.add('hidden'));
+        document.querySelectorAll('#newRxSection, #historySection, #patientsSection, #profileSection').forEach(s => s.classList.add('hidden'));
         document.getElementById(sectionId).classList.remove('hidden');
     }
 
-    // doctor login check
     function authenticate(email, pwd) {
         let doc = doctors.find(d => d.email === email && d.password === pwd);
         if(doc) {
@@ -326,19 +351,16 @@
     function renderDashboard() {
         document.getElementById('authView').style.display = 'none';
         document.getElementById('dashboardView').style.display = 'block';
-        // load patient list for search
         renderPatientsList();
         renderPrescriptionsHistory();
-        renderAppointments();
         showProfile();
         showSection('newRxSection');
-        // set today's date
         if(!document.getElementById('rxDate').value) document.getElementById('rxDate').valueAsDate = new Date();
     }
 
     function renderPatientsList() {
         let myPatients = patients.filter(p => p.doctorId === currentDoctor.id);
-        let html = '<table><tr><th>Name</th><th>Phone</th><th>Age</th><th>Last Visit</th></tr>';
+        let html = '<table><tr style="background:var(--primary); color:white;"><th>Name</th><th>Phone</th><th>Age</th><th>Last Visit</th></tr>';
         myPatients.forEach(p => {
             let lastRx = prescriptions.filter(rx => rx.patientId === p.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
             html += `<tr><td>${p.name}</td><td>${p.phone}</td><td>${p.age}</td><td>${lastRx ? lastRx.date : '-'}</td></tr>`;
@@ -349,13 +371,11 @@
 
     function renderPrescriptionsHistory(filter='') {
         let myRx = prescriptions.filter(rx => rx.doctorId === currentDoctor.id);
-        if(filter) {
-            myRx = myRx.filter(rx => rx.patientName.toLowerCase().includes(filter.toLowerCase()) || rx.patientPhone.includes(filter));
-        }
-        let html = '<table><tr><th>Date</th><th>Patient</th><th>Diagnosis</th><th>Actions</th></tr>';
+        if(filter) myRx = myRx.filter(rx => rx.patientName.toLowerCase().includes(filter.toLowerCase()) || rx.patientPhone.includes(filter));
+        let html = '<table><tr style="background:var(--primary); color:white;"><th>Date</th><th>Patient</th><th>Diagnosis</th><th>Actions</th></tr>';
         myRx.forEach(rx => {
-            html += `<tr><td>${rx.date}</td><td>${rx.patientName} (${rx.patientPhone})</td><td>${rx.diagnosis.substring(0,30)}</td>
-            <td><button class="viewRxBtn" data-id="${rx.id}">View</button></td></tr>`;
+            html += `<tr><td>${rx.date}</td><td>${rx.patientName} (${rx.patientPhone})</td><td>${rx.diagnosis.substring(0,40)}</td>
+            <td><button class="viewRxBtn" data-id="${rx.id}" style="background:var(--accent);">View</button></td></tr>`;
         });
         html += '</table>';
         document.getElementById('prescriptionsList').innerHTML = html;
@@ -370,25 +390,25 @@
         let doctor = doctors.find(d => d.id === currentDoctor.id);
         let outputDiv = document.getElementById('prescriptionOutput');
         outputDiv.innerHTML = `
-            <div style="padding:20px; font-family:'Berlin Sans FB Demi'; background:white; color:black;">
-                <h2>🏥 ${doctor.clinicName}</h2>
-                <p>Dr. ${doctor.name} | Reg No: ${doctor.regNumber}<br>${doctor.specialisation} | 📞 ${doctor.phone}</p>
+            <div style="padding:25px; font-family:'Times New Roman', Times, serif; background:white; color:black; border-radius:24px;">
+                <h2 style="color:#0277bd;">🏥 ${doctor.clinicName}</h2>
+                <p><strong>Dr. ${doctor.name}</strong> | Reg No: ${doctor.regNumber}<br>${doctor.specialisation} | 📞 ${doctor.phone}</p>
                 <hr>
-                <h3>Prescription</h3>
+                <h3>📄 E-Prescription</h3>
                 <p><strong>Patient:</strong> ${rx.patientName} (${rx.patientAge} yrs, ${rx.patientGender})<br>
                 <strong>Phone:</strong> ${rx.patientPhone} | <strong>Date:</strong> ${rx.date}</p>
                 <p><strong>Diagnosis:</strong> ${rx.diagnosis}<br><strong>Symptoms:</strong> ${rx.symptoms}<br>
                 <strong>Vitals:</strong> BP:${rx.bp}, Temp:${rx.temp}, Wt:${rx.weight}, Pulse:${rx.pulse}<br>
                 <strong>Allergies:</strong> ${rx.allergies} | <strong>History:</strong> ${rx.history}</p>
                 <h4>💊 Medicines</h4>
-                <table border="1" cellpadding="5" style="width:100%"><tr><th>Medicine</th><th>Dose</th><th>Timing</th><th>Food</th><th>Days</th><th>Instructions</th></tr>
+                <table border="1" cellpadding="6" style="width:100%; border-collapse:collapse;"><tr><th>Medicine</th><th>Dose</th><th>Timing</th><th>Food</th><th>Days</th><th>Instructions</th></tr>
                 ${rx.medicines.map(m => `<tr><td>${m.name}</td><td>${m.dose}</td><td>${m.timing}</td><td>${m.food}</td><td>${m.days}</td><td>${m.instructions}</td></tr>`).join('')}
                 </table>
-                <h4>🧪 Tests</h4><p>${rx.tests.map(t=>t.name).join(', ')}</p>
-                <h4>📝 Advice</h4><p>Diet: ${rx.dietAdvice}<br>Rest: ${rx.restAdvice}<br>Follow-up: ${rx.followUp}<br>⚠️ Emergency: ${rx.emergencyNote}</p>
+                <h4>🧪 Tests Recommended</h4><p>${rx.tests.map(t=>t.name).join(', ')}</p>
+                <h4>📌 Advice</h4><p>Diet: ${rx.dietAdvice}<br>Rest: ${rx.restAdvice}<br>Follow-up: ${rx.followUp}<br>⚠️ Emergency: ${rx.emergencyNote}</p>
                 <hr>
-                <div id="qrcode-${rx.id}" style="margin-top:10px;"></div>
-                <p>Digitally signed by Dr. ${doctor.name} | ${doctor.regNumber}</p>
+                <div id="qrcode-${rx.id}"></div>
+                <p><em>Digitally signed by Dr. ${doctor.name} | ${doctor.regNumber}</em></p>
             </div>
         `;
         document.getElementById('prescriptionViewModal').classList.remove('hidden');
@@ -399,39 +419,27 @@
                 height: 128
             });
         }, 100);
-        // attach PDF download, print, email
         document.getElementById('downloadPDFBtn').onclick = () => {
             let element = document.getElementById('prescriptionOutput');
-            html2pdf().from(element).set({ margin: 0.5, filename: `Rx_${rx.id}.pdf` }).save();
+            html2pdf().from(element).set({ margin: 0.5, filename: `DoctorDesk_Rx_${rx.id}.pdf` }).save();
         };
         document.getElementById('printRxBtn').onclick = () => window.print();
-        document.getElementById('sendEmailBtn').onclick = () => alert(`📧 Demo: Prescription PDF would be sent to patient's email: ${rx.patientPhone} (mock). In real backend, integrate Nodemailer.`);
+        document.getElementById('sendEmailBtn').onclick = () => alert(`📧 Email sent (demo): Prescription PDF would be delivered to patient's phone ${rx.patientPhone} via email/SMS.`);
         document.getElementById('closeModalBtn').onclick = () => document.getElementById('prescriptionViewModal').classList.add('hidden');
     }
 
     function showProfile() {
         let doc = currentDoctor;
         document.getElementById('profileInfo').innerHTML = `
-            <p><strong>Name:</strong> ${doc.name}</p>
-            <p><strong>Reg No:</strong> ${doc.regNumber}</p>
-            <p><strong>Specialization:</strong> ${doc.specialisation}</p>
-            <p><strong>Clinic:</strong> ${doc.clinicName}</p>
-            <p><strong>Email:</strong> ${doc.email}</p>
-            <p><strong>Phone:</strong> ${doc.phone}</p>
+            <p><strong>👨‍⚕️ Name:</strong> ${doc.name}</p>
+            <p><strong>📜 Reg No:</strong> ${doc.regNumber}</p>
+            <p><strong>⚕️ Specialization:</strong> ${doc.specialisation}</p>
+            <p><strong>🏥 Clinic:</strong> ${doc.clinicName}</p>
+            <p><strong>📧 Email:</strong> ${doc.email}</p>
+            <p><strong>📞 Phone:</strong> ${doc.phone}</p>
         `;
     }
 
-    function renderAppointments() {
-        let myAppts = appointments.filter(a => a.doctorId === currentDoctor.id);
-        let html = '<table><tr><th>Patient</th><th>Date</th><th>Reason</th><th>Status</th></tr>';
-        myAppts.forEach(a => {
-            html += `<tr><td>${a.patientName}</td><td>${a.dateTime}</td><td>${a.reason}</td><td>${a.status}</td></tr>`;
-        });
-        html += '</table>';
-        document.getElementById('appointmentsList').innerHTML = html;
-    }
-
-    // Helper: Find or create patient
     function getOrCreatePatient(patientData) {
         let existing = patients.find(p => p.phone === patientData.phone && p.doctorId === currentDoctor.id);
         if(existing) return existing.id;
@@ -441,10 +449,9 @@
         return newPatient.id;
     }
 
-    // Save prescription logic
+    // Save prescription
     document.getElementById('prescriptionForm')?.addEventListener('submit', (e) => {
         e.preventDefault();
-        // collect medicines
         let medicines = [];
         document.querySelectorAll('.medicine-row').forEach(row => {
             medicines.push({
@@ -494,13 +501,12 @@
         };
         prescriptions.push(rx);
         saveAll();
-        alert('Prescription saved!');
+        alert('✅ Prescription saved successfully!');
         renderPrescriptionsHistory();
         renderPatientsList();
         showSection('historySection');
     });
 
-    // dynamic medicine rows
     function addMedicineRow(name='', dose='', timing='', food='', days='', inst='') {
         let div = document.createElement('div');
         div.className = 'medicine-row';
@@ -524,7 +530,6 @@
         document.getElementById('testsContainer').appendChild(div);
     });
 
-    // search patient
     document.getElementById('searchPatientBtn')?.addEventListener('click',()=>{
         let query = document.getElementById('patientSearch').value;
         let match = patients.find(p => p.doctorId===currentDoctor.id && (p.phone===query || p.name.toLowerCase().includes(query.toLowerCase())));
@@ -534,28 +539,22 @@
             document.getElementById('pGender').value = match.gender;
             document.getElementById('pPhone').value = match.phone;
             document.getElementById('pAddress').value = match.address||'';
-            document.getElementById('searchResult').innerHTML = '<span style="color:green;">Patient loaded ✅</span>';
+            document.getElementById('searchResult').innerHTML = '<span style="color:green;">✔ Patient loaded</span>';
         } else {
-            document.getElementById('searchResult').innerHTML = '<span style="color:red;">Not found, you can create new</span>';
+            document.getElementById('searchResult').innerHTML = '<span style="color:red;">❌ Not found, fill new details</span>';
         }
     });
 
-    // navigation
+    // Navigation
     document.getElementById('navNewRx')?.addEventListener('click',()=>showSection('newRxSection'));
     document.getElementById('navHistory')?.addEventListener('click',()=>{renderPrescriptionsHistory();showSection('historySection');});
     document.getElementById('navPatients')?.addEventListener('click',()=>{renderPatientsList();showSection('patientsSection');});
-    document.getElementById('navAppointments')?.addEventListener('click',()=>{renderAppointments();showSection('appointmentsSection');});
     document.getElementById('navProfile')?.addEventListener('click',()=>{showProfile();showSection('profileSection');});
     document.getElementById('logoutBtn')?.addEventListener('click',()=>{currentDoctor=null;localStorage.removeItem('currentDoctorId');location.reload();});
     document.getElementById('darkModeToggle')?.addEventListener('click',()=>document.body.classList.toggle('dark'));
-    document.getElementById('newApptBtn')?.addEventListener('click',()=>{
-        let pname = prompt('Patient name');
-        let dt = prompt('Date & time (YYYY-MM-DD HH:MM)');
-        if(pname && dt) appointments.push({id:Date.now(), doctorId:currentDoctor.id, patientName:pname, dateTime:dt, reason:'General', status:'Scheduled'});
-        saveAll(); renderAppointments();
-    });
+    document.getElementById('editProfileBtn')?.addEventListener('click',()=>alert('Profile editing can be extended.'));
 
-    // Authentication UI
+    // Auth UI
     document.getElementById('showLoginBtn')?.addEventListener('click',()=>{document.getElementById('loginForm').style.display='block';document.getElementById('signupForm').style.display='none';});
     document.getElementById('showSignupBtn')?.addEventListener('click',()=>{document.getElementById('loginForm').style.display='none';document.getElementById('signupForm').style.display='block';});
     document.getElementById('doLogin')?.addEventListener('click',()=>{
@@ -575,19 +574,16 @@
             phone: document.getElementById('docPhone').value,
             password: document.getElementById('docPassword').value
         };
-        if(doctors.find(d=>d.email===newDoc.email)) alert('Email exists');
-        else { doctors.push(newDoc); saveAll(); alert('Registered! Please login.'); }
+        if(doctors.find(d=>d.email===newDoc.email)) alert('Email already exists');
+        else { doctors.push(newDoc); saveAll(); alert('Registration successful! Please login.'); }
     });
-    // check for existing session
     let savedId = localStorage.getItem('currentDoctorId');
     if(savedId) { currentDoctor = doctors.find(d=>d.id == savedId); if(currentDoctor) renderDashboard(); }
-    // initial: create dummy doctor if empty
     if(doctors.length===0){
-        doctors.push({id:1, name:'Dr. Demo', regNumber:'MC-12345', specialisation:'General Medicine', clinicName:'Demo Clinic', email:'doc@demo.com', phone:'9999999999', password:'demo123'});
+        doctors.push({id:1, name:'Dr. Demo', regNumber:'MC-98765', specialisation:'Cardiology', clinicName:'Healing Hands Hospital', email:'doc@demo.com', phone:'9876543210', password:'demo123'});
         saveAll();
     }
-    // Add sample medicine rows on load
-    if(document.getElementById('medicinesContainer')) addMedicineRow('Paracetamol','500mg','Morning+Night','After food','5','Take after meals');
+    if(document.getElementById('medicinesContainer') && document.getElementById('medicinesContainer').children.length===0) addMedicineRow('Paracetamol','500mg','Morning+Night','After food','5','For fever');
 </script>
 </body>
 </html>
