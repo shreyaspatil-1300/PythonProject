@@ -181,6 +181,11 @@
             background-clip: text;
             color: transparent;
         }
+        /* public prescription view (no login) */
+        .public-view {
+            max-width: 1000px;
+            margin: 20px auto;
+        }
     </style>
 </head>
 <body>
@@ -191,6 +196,18 @@
     <img src="https://cdn-icons-png.flaticon.com/512/3096/3096988.png" style="bottom:5%; left:20%; width:130px; animation-duration: 18s;" alt="stethoscope">
 </div>
 <div class="container" id="app">
+    <!-- PUBLIC PRESCRIPTION VIEW (shown when ?prescriptionId=xxx is in URL) -->
+    <div id="publicPrescriptionView" class="public-view hidden">
+        <div class="card" id="publicPrescriptionCard">
+            <!-- content filled by JavaScript -->
+        </div>
+        <div class="flex no-print" style="justify-content:center; margin-top:20px;">
+            <button id="publicDownloadPDFBtn">📄 Download PDF</button>
+            <button id="publicPrintBtn">🖨️ Print</button>
+            <button id="publicCloseBtn">🔒 Back to Doctor Portal</button>
+        </div>
+    </div>
+
     <!-- AUTH VIEW -->
     <div id="authView">
         <div class="card" style="max-width: 550px; margin: 60px auto; text-align:center;">
@@ -384,12 +401,9 @@
         });
     }
 
-    function showPrescriptionDetail(rxId) {
-        let rx = prescriptions.find(p => p.id === rxId);
-        if(!rx) return;
-        let doctor = doctors.find(d => d.id === currentDoctor.id);
-        let outputDiv = document.getElementById('prescriptionOutput');
-        outputDiv.innerHTML = `
+    // Shared function to generate prescription HTML (used by both doctor modal and public view)
+    function generatePrescriptionHTML(rx, doctor) {
+        return `
             <div style="padding:25px; font-family:'Times New Roman', Times, serif; background:white; color:black; border-radius:24px;">
                 <h2 style="color:#0277bd;">🏥 ${doctor.clinicName}</h2>
                 <p><strong>Dr. ${doctor.name}</strong> | Reg No: ${doctor.regNumber}<br>${doctor.specialisation} | 📞 ${doctor.phone}</p>
@@ -407,18 +421,40 @@
                 <h4>🧪 Tests Recommended</h4><p>${rx.tests.map(t=>t.name).join(', ')}</p>
                 <h4>📌 Advice</h4><p>Diet: ${rx.dietAdvice}<br>Rest: ${rx.restAdvice}<br>Follow-up: ${rx.followUp}<br>⚠️ Emergency: ${rx.emergencyNote}</p>
                 <hr>
-                <div id="qrcode-${rx.id}"></div>
+                <div id="public-qrcode-placeholder"></div>
                 <p><em>Digitally signed by Dr. ${doctor.name} | ${doctor.regNumber}</em></p>
             </div>
         `;
+    }
+
+    function showPrescriptionDetail(rxId) {
+        let rx = prescriptions.find(p => p.id === rxId);
+        if(!rx) return;
+        let doctor = doctors.find(d => d.id === currentDoctor.id);
+        let outputDiv = document.getElementById('prescriptionOutput');
+        outputDiv.innerHTML = generatePrescriptionHTML(rx, doctor);
         document.getElementById('prescriptionViewModal').classList.remove('hidden');
+        
+        // Generate QR code that points to PUBLIC view (no login required)
+        const publicUrl = `${window.location.origin}${window.location.pathname}?prescriptionId=${rx.id}`;
         setTimeout(() => {
-            new QRCode(document.getElementById(`qrcode-${rx.id}`), {
-                text: `Prescription ID: ${rx.id} | Dr. ${doctor.name} | Patient: ${rx.patientName}`,
-                width: 128,
-                height: 128
-            });
+            const qrContainer = document.getElementById(`qrcode-${rx.id}`);
+            if(qrContainer) {
+                qrContainer.innerHTML = "";
+                new QRCode(qrContainer, {
+                    text: publicUrl,
+                    width: 128,
+                    height: 128
+                });
+            } else {
+                // fallback: create a new div if not exists
+                let newDiv = document.createElement('div');
+                newDiv.id = `qrcode-${rx.id}`;
+                outputDiv.appendChild(newDiv);
+                new QRCode(newDiv, { text: publicUrl, width: 128, height: 128 });
+            }
         }, 100);
+        
         document.getElementById('downloadPDFBtn').onclick = () => {
             let element = document.getElementById('prescriptionOutput');
             html2pdf().from(element).set({ margin: 0.5, filename: `DoctorDesk_Rx_${rx.id}.pdf` }).save();
@@ -426,6 +462,39 @@
         document.getElementById('printRxBtn').onclick = () => window.print();
         document.getElementById('sendEmailBtn').onclick = () => alert(`📧 Email sent (demo): Prescription PDF would be delivered to patient's phone ${rx.patientPhone} via email/SMS.`);
         document.getElementById('closeModalBtn').onclick = () => document.getElementById('prescriptionViewModal').classList.add('hidden');
+    }
+
+    // ---------- PUBLIC PRESCRIPTION VIEW (for patients) ----------
+    function showPublicPrescription(rxId) {
+        let rx = prescriptions.find(p => p.id === rxId);
+        if(!rx) {
+            document.getElementById('publicPrescriptionCard').innerHTML = '<div class="card"><h3>❌ Prescription not found</h3><p>Invalid or expired link.</p></div>';
+            document.getElementById('publicPrescriptionView').classList.remove('hidden');
+            return;
+        }
+        // find the doctor who wrote this prescription
+        let doctor = doctors.find(d => d.id === rx.doctorId);
+        if(!doctor) {
+            document.getElementById('publicPrescriptionCard').innerHTML = '<div class="card"><h3>❌ Doctor information missing</h3></div>';
+            document.getElementById('publicPrescriptionView').classList.remove('hidden');
+            return;
+        }
+        const htmlContent = generatePrescriptionHTML(rx, doctor);
+        document.getElementById('publicPrescriptionCard').innerHTML = htmlContent;
+        document.getElementById('publicPrescriptionView').classList.remove('hidden');
+        
+        // attach PDF and print actions for public view
+        document.getElementById('publicDownloadPDFBtn').onclick = () => {
+            let element = document.getElementById('publicPrescriptionCard');
+            html2pdf().from(element).set({ margin: 0.5, filename: `Prescription_${rx.id}.pdf` }).save();
+        };
+        document.getElementById('publicPrintBtn').onclick = () => {
+            window.print();
+        };
+        document.getElementById('publicCloseBtn').onclick = () => {
+            // remove prescriptionId from URL and reload to go back to doctor portal
+            window.location.href = window.location.pathname;
+        };
     }
 
     function showProfile() {
@@ -577,13 +646,26 @@
         if(doctors.find(d=>d.email===newDoc.email)) alert('Email already exists');
         else { doctors.push(newDoc); saveAll(); alert('Registration successful! Please login.'); }
     });
-    let savedId = localStorage.getItem('currentDoctorId');
-    if(savedId) { currentDoctor = doctors.find(d=>d.id == savedId); if(currentDoctor) renderDashboard(); }
-    if(doctors.length===0){
-        doctors.push({id:1, name:'Dr. Demo', regNumber:'MC-98765', specialisation:'Cardiology', clinicName:'Healing Hands Hospital', email:'doc@demo.com', phone:'9876543210', password:'demo123'});
-        saveAll();
+    
+    // ---- MAIN INITIALIZATION ----
+    // First check if there is a prescriptionId in the URL (for patient access)
+    const urlParams = new URLSearchParams(window.location.search);
+    const prescriptionId = urlParams.get('prescriptionId');
+    if (prescriptionId) {
+        // Patient/public view – hide login/dashboard, show public prescription
+        document.getElementById('authView').style.display = 'none';
+        document.getElementById('dashboardView').style.display = 'none';
+        showPublicPrescription(prescriptionId);
+    } else {
+        // Normal doctor flow
+        let savedId = localStorage.getItem('currentDoctorId');
+        if(savedId) { currentDoctor = doctors.find(d=>d.id == savedId); if(currentDoctor) renderDashboard(); }
+        if(doctors.length===0){
+            doctors.push({id:1, name:'Dr. Demo', regNumber:'MC-98765', specialisation:'Cardiology', clinicName:'Healing Hands Hospital', email:'doc@demo.com', phone:'9876543210', password:'demo123'});
+            saveAll();
+        }
+        if(document.getElementById('medicinesContainer') && document.getElementById('medicinesContainer').children.length===0) addMedicineRow('Paracetamol','500mg','Morning+Night','After food','5','For fever');
     }
-    if(document.getElementById('medicinesContainer') && document.getElementById('medicinesContainer').children.length===0) addMedicineRow('Paracetamol','500mg','Morning+Night','After food','5','For fever');
 </script>
 </body>
 </html>
