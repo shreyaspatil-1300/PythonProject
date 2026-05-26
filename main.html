@@ -181,7 +181,7 @@
             background-clip: text;
             color: transparent;
         }
-        /* public prescription view (no login) */
+        /* public prescription view (no login, no localStorage) */
         .public-view {
             max-width: 1000px;
             margin: 20px auto;
@@ -196,7 +196,7 @@
     <img src="https://cdn-icons-png.flaticon.com/512/3096/3096988.png" style="bottom:5%; left:20%; width:130px; animation-duration: 18s;" alt="stethoscope">
 </div>
 <div class="container" id="app">
-    <!-- PUBLIC PRESCRIPTION VIEW (shown when ?prescriptionId=xxx is in URL) -->
+    <!-- PUBLIC PRESCRIPTION VIEW (shown when ?data=... is in URL) -->
     <div id="publicPrescriptionView" class="public-view hidden">
         <div class="card" id="publicPrescriptionCard">
             <!-- content filled by JavaScript -->
@@ -382,7 +382,7 @@
             let lastRx = prescriptions.filter(rx => rx.patientId === p.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
             html += `<tr><td>${p.name}</td><td>${p.phone}</td><td>${p.age}</td><td>${lastRx ? lastRx.date : '-'}</td></tr>`;
         });
-        html += '</table>';
+        html += '<table>';
         document.getElementById('patientsList').innerHTML = html;
     }
 
@@ -394,14 +394,14 @@
             html += `<tr><td>${rx.date}</td><td>${rx.patientName} (${rx.patientPhone})</td><td>${rx.diagnosis.substring(0,40)}</td>
             <td><button class="viewRxBtn" data-id="${rx.id}" style="background:var(--accent);">View</button></td></tr>`;
         });
-        html += '</table>';
+        html += '</table';
         document.getElementById('prescriptionsList').innerHTML = html;
         document.querySelectorAll('.viewRxBtn').forEach(btn => {
             btn.addEventListener('click', (e) => showPrescriptionDetail(btn.getAttribute('data-id')));
         });
     }
 
-    // Shared function to generate prescription HTML (used by both doctor modal and public view)
+    // Helper: generate prescription HTML from data (doctor + rx)
     function generatePrescriptionHTML(rx, doctor) {
         return `
             <div style="padding:25px; font-family:'Times New Roman', Times, serif; background:white; color:black; border-radius:24px;">
@@ -421,7 +421,6 @@
                 <h4>🧪 Tests Recommended</h4><p>${rx.tests.map(t=>t.name).join(', ')}</p>
                 <h4>📌 Advice</h4><p>Diet: ${rx.dietAdvice}<br>Rest: ${rx.restAdvice}<br>Follow-up: ${rx.followUp}<br>⚠️ Emergency: ${rx.emergencyNote}</p>
                 <hr>
-                <div id="public-qrcode-placeholder"></div>
                 <p><em>Digitally signed by Dr. ${doctor.name} | ${doctor.regNumber}</em></p>
             </div>
         `;
@@ -435,8 +434,26 @@
         outputDiv.innerHTML = generatePrescriptionHTML(rx, doctor);
         document.getElementById('prescriptionViewModal').classList.remove('hidden');
         
-        // Generate QR code that points to PUBLIC view (no login required)
-        const publicUrl = `${window.location.origin}${window.location.pathname}?prescriptionId=${rx.id}`;
+        // ---- FIX: QR code now contains the FULL prescription data (self-contained) ----
+        // Package the prescription together with doctor data into one object
+        const fullData = {
+            prescription: rx,
+            doctor: {
+                name: doctor.name,
+                regNumber: doctor.regNumber,
+                specialisation: doctor.specialisation,
+                clinicName: doctor.clinicName,
+                phone: doctor.phone
+            }
+        };
+        // Convert to JSON and compress (no need for external server)
+        const jsonStr = JSON.stringify(fullData);
+        // Use encodeURIComponent to make it safe for URL
+        const encodedData = encodeURIComponent(jsonStr);
+        // Build URL that points to the same page with data parameter
+        const publicUrl = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
+        
+        // Generate QR code
         setTimeout(() => {
             const qrContainer = document.getElementById(`qrcode-${rx.id}`);
             if(qrContainer) {
@@ -447,7 +464,6 @@
                     height: 128
                 });
             } else {
-                // fallback: create a new div if not exists
                 let newDiv = document.createElement('div');
                 newDiv.id = `qrcode-${rx.id}`;
                 outputDiv.appendChild(newDiv);
@@ -464,37 +480,32 @@
         document.getElementById('closeModalBtn').onclick = () => document.getElementById('prescriptionViewModal').classList.add('hidden');
     }
 
-    // ---------- PUBLIC PRESCRIPTION VIEW (for patients) ----------
-    function showPublicPrescription(rxId) {
-        let rx = prescriptions.find(p => p.id === rxId);
-        if(!rx) {
-            document.getElementById('publicPrescriptionCard').innerHTML = '<div class="card"><h3>❌ Prescription not found</h3><p>Invalid or expired link.</p></div>';
+    // ---------- PUBLIC PRESCRIPTION VIEW (from QR, no localStorage needed) ----------
+    function showPublicPrescriptionFromData(encodedData) {
+        try {
+            const jsonStr = decodeURIComponent(encodedData);
+            const fullData = JSON.parse(jsonStr);
+            const rx = fullData.prescription;
+            const doctor = fullData.doctor;
+            const htmlContent = generatePrescriptionHTML(rx, doctor);
+            document.getElementById('publicPrescriptionCard').innerHTML = htmlContent;
             document.getElementById('publicPrescriptionView').classList.remove('hidden');
-            return;
-        }
-        // find the doctor who wrote this prescription
-        let doctor = doctors.find(d => d.id === rx.doctorId);
-        if(!doctor) {
-            document.getElementById('publicPrescriptionCard').innerHTML = '<div class="card"><h3>❌ Doctor information missing</h3></div>';
+            
+            // attach PDF and print actions for public view
+            document.getElementById('publicDownloadPDFBtn').onclick = () => {
+                let element = document.getElementById('publicPrescriptionCard');
+                html2pdf().from(element).set({ margin: 0.5, filename: `Prescription_${rx.id}.pdf` }).save();
+            };
+            document.getElementById('publicPrintBtn').onclick = () => {
+                window.print();
+            };
+            document.getElementById('publicCloseBtn').onclick = () => {
+                window.location.href = window.location.pathname;
+            };
+        } catch(e) {
+            document.getElementById('publicPrescriptionCard').innerHTML = '<div class="card"><h3>❌ Invalid prescription data</h3><p>The QR code does not contain valid prescription information.</p></div>';
             document.getElementById('publicPrescriptionView').classList.remove('hidden');
-            return;
         }
-        const htmlContent = generatePrescriptionHTML(rx, doctor);
-        document.getElementById('publicPrescriptionCard').innerHTML = htmlContent;
-        document.getElementById('publicPrescriptionView').classList.remove('hidden');
-        
-        // attach PDF and print actions for public view
-        document.getElementById('publicDownloadPDFBtn').onclick = () => {
-            let element = document.getElementById('publicPrescriptionCard');
-            html2pdf().from(element).set({ margin: 0.5, filename: `Prescription_${rx.id}.pdf` }).save();
-        };
-        document.getElementById('publicPrintBtn').onclick = () => {
-            window.print();
-        };
-        document.getElementById('publicCloseBtn').onclick = () => {
-            // remove prescriptionId from URL and reload to go back to doctor portal
-            window.location.href = window.location.pathname;
-        };
     }
 
     function showProfile() {
@@ -648,14 +659,14 @@
     });
     
     // ---- MAIN INITIALIZATION ----
-    // First check if there is a prescriptionId in the URL (for patient access)
+    // Check for "data" parameter (self-contained prescription)
     const urlParams = new URLSearchParams(window.location.search);
-    const prescriptionId = urlParams.get('prescriptionId');
-    if (prescriptionId) {
-        // Patient/public view – hide login/dashboard, show public prescription
+    const encodedPrescriptionData = urlParams.get('data');
+    if (encodedPrescriptionData) {
+        // Public view: hide doctor login/dashboard, show prescription directly
         document.getElementById('authView').style.display = 'none';
         document.getElementById('dashboardView').style.display = 'none';
-        showPublicPrescription(prescriptionId);
+        showPublicPrescriptionFromData(encodedPrescriptionData);
     } else {
         // Normal doctor flow
         let savedId = localStorage.getItem('currentDoctorId');
