@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>DoctorDesk | QR‑Full Prescription</title>
+    <title>DoctorDesk | E-Prescription</title>
     <!-- QR Code library -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <!-- html2pdf for PDF generation -->
@@ -14,11 +14,12 @@
             font-family: 'Times New Roman', Times, serif;
             transition: all 0.2s ease;
         }
-        /* EXTRA COLOURFUL & ATTRACTIVE BACKGROUND */
+        /* Light / Dark variables */
         :root {
-            --card: rgba(255, 255, 255, 0.94);
+            --bg: linear-gradient(135deg, #e0f7fa 0%, #e8f5e9 100%);
+            --card: rgba(255, 255, 255, 0.95);
             --text: #1a2a3a;
-            --border: rgba(200, 230, 233, 0.8);
+            --border: #c8e6e9;
             --primary: #0277bd;
             --primary-dark: #01579b;
             --danger: #d32f2f;
@@ -27,7 +28,8 @@
             --accent: #ffb300;
         }
         body.dark {
-            --card: rgba(30, 42, 54, 0.95);
+            --bg: linear-gradient(135deg, #1e2a3a 0%, #0f1a24 100%);
+            --card: #1e2a36;
             --text: #f0f4f8;
             --border: #2c3e44;
             --primary: #4fc3f7;
@@ -35,21 +37,23 @@
             --muted: #b0bec5;
         }
         body {
+            background: var(--bg);
+            color: var(--text);
             margin: 0;
             padding: 20px;
             min-height: 100vh;
-            background: linear-gradient(135deg, #ff9a9e, #fad0c4, #fad0c4, #ffdde1, #a1c4fd, #c2e9fb);
-            background-size: 400% 400%;
-            animation: gradientFlow 18s ease infinite;
-            color: var(--text);
+            animation: bgShift 12s infinite alternate;
         }
-        @keyframes gradientFlow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        @keyframes bgShift {
+            0% { background-size: 100% 100%; }
+            100% { background-size: 120% 120%; }
         }
-        /* Floating animated colourful medical icons */
-        .floating-bg {
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        /* animated hospital images background (floating) */
+        .animated-bg {
             position: fixed;
             top: 0;
             left: 0;
@@ -59,31 +63,25 @@
             pointer-events: none;
             overflow: hidden;
         }
-        .floating-bg img {
+        .animated-bg img {
             position: absolute;
-            opacity: 0.25;
-            animation: floatAround 22s infinite ease-in-out;
-            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.2));
+            opacity: 0.15;
+            animation: float 20s infinite ease-in-out;
+            width: 180px;
         }
-        @keyframes floatAround {
-            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-            33% { transform: translate(40px, -30px) rotate(8deg) scale(1.05); }
-            66% { transform: translate(-20px, 20px) rotate(-5deg) scale(0.98); }
-            100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
         }
         .card {
             background: var(--card);
-            backdrop-filter: blur(8px);
             border-radius: 32px;
             padding: 28px;
             margin-bottom: 28px;
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.4);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 28px 40px -12px rgba(0,0,0,0.35);
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.2);
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,255,0.3);
         }
         .flex {
             display: flex;
@@ -98,19 +96,14 @@
             gap: 24px;
         }
         input, select, textarea, button {
-            background: rgba(255,255,255,0.85);
-            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--card);
+            border: 1px solid var(--border);
             color: var(--text);
             border-radius: 24px;
             padding: 12px 18px;
             font-size: 16px;
             outline: none;
             font-weight: bold;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(2,119,189,0.3);
-            background: white;
         }
         button {
             background: linear-gradient(95deg, var(--primary), var(--primary-dark));
@@ -120,18 +113,29 @@
             font-weight: bold;
             padding: 12px 24px;
             border-radius: 40px;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
         }
-        button:active { transform: scale(0.96); }
+        button:active { transform: scale(0.97); }
         button.secondary {
-            background: linear-gradient(95deg, #ff8a5c, #ff6b3d);
+            background: linear-gradient(95deg, var(--muted), #2c3e50);
         }
         button.danger {
-            background: linear-gradient(95deg, #e53935, #b71c1c);
+            background: linear-gradient(95deg, var(--danger), #b71c1c);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 24px;
+            overflow: hidden;
+        }
+        th, td {
+            border-bottom: 1px solid var(--border);
+            padding: 14px 8px;
+            text-align: left;
         }
         .nav-bar {
-            background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(12px);
+            background: var(--card);
             border-radius: 60px;
             padding: 12px 28px;
             margin-bottom: 30px;
@@ -140,14 +144,13 @@
             gap: 20px;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
         .hidden {
             display: none;
         }
         .medicine-row, .test-row {
-            background: rgba(0,0,0,0.05);
+            background: rgba(0,0,0,0.03);
             padding: 15px;
             border-radius: 28px;
             margin-bottom: 16px;
@@ -166,35 +169,33 @@
             .print-area { position: absolute; top: 0; left: 0; width: 100%; background: white; color: black; }
             .no-print { display: none; }
         }
-        h2, h3 {
-            background: linear-gradient(120deg, var(--primary), var(--accent));
+        .prescription-box {
+            background: white;
+            color: black;
+            padding: 30px;
+            border-radius: 24px;
+        }
+        .welcome-text {
+            background: linear-gradient(120deg, var(--accent), #ff8c00);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            display: inline-block;
-        }
-        table tr:hover {
-            background: rgba(0,0,0,0.05);
         }
     </style>
 </head>
 <body>
-<!-- VIVID FLOATING ICONS -->
-<div class="floating-bg">
-    <img src="https://cdn-icons-png.flaticon.com/512/2922/2922561.png" style="top:5%; left:3%; width:130px; animation-duration: 18s; opacity:0.3;" alt="hospital">
-    <img src="https://cdn-icons-png.flaticon.com/512/4227/4227992.png" style="bottom:8%; right:2%; width:150px; animation-duration: 24s; animation-delay: -3s;" alt="ambulance">
-    <img src="https://cdn-icons-png.flaticon.com/512/1998/1998613.png" style="top:30%; left:85%; width:140px; animation-duration: 20s;" alt="doctor">
-    <img src="https://cdn-icons-png.flaticon.com/512/3096/3096988.png" style="bottom:15%; left:10%; width:120px; animation-duration: 28s; animation-delay: -5s;" alt="stethoscope">
-    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" style="top:70%; left:45%; width:100px; animation-duration: 22s;" alt="heartbeat">
-    <img src="https://cdn-icons-png.flaticon.com/512/2610/2610592.png" style="top:15%; right:20%; width:110px; animation-duration: 26s;" alt="pill">
+<div class="animated-bg">
+    <img src="https://cdn-icons-png.flaticon.com/512/2922/2922561.png" style="top:10%; left:5%; width:140px;" alt="hospital">
+    <img src="https://cdn-icons-png.flaticon.com/512/4227/4227992.png" style="bottom:15%; right:3%; width:180px; animation-delay: -5s;" alt="ambulance">
+    <img src="https://cdn-icons-png.flaticon.com/512/1998/1998613.png" style="top:40%; left:80%; width:150px; animation-duration: 25s;" alt="doctor">
+    <img src="https://cdn-icons-png.flaticon.com/512/3096/3096988.png" style="bottom:5%; left:20%; width:130px; animation-duration: 18s;" alt="stethoscope">
 </div>
-
 <div class="container" id="app">
     <!-- AUTH VIEW -->
     <div id="authView">
         <div class="card" style="max-width: 550px; margin: 60px auto; text-align:center;">
-            <h1 style="font-size: 3rem; margin:0; background: linear-gradient(135deg,#0277bd,#ffb300); -webkit-background-clip:text; background-clip:text; color:transparent;">🏥 DoctorDesk</h1>
-            <p style="font-size:1.2rem;">Vibrant E-Prescription for Modern Clinics</p>
+            <h1 style="font-size: 3rem; margin:0;">🏥 DoctorDesk</h1>
+            <p>Smart E-Prescription for Modern Clinics</p>
             <div class="flex" style="justify-content:center;">
                 <button id="showLoginBtn" style="background:#0277bd;">Login</button>
                 <button id="showSignupBtn" class="secondary">Sign up</button>
@@ -219,10 +220,10 @@
         </div>
     </div>
 
-    <!-- DASHBOARD -->
+    <!-- DASHBOARD (after login) -->
     <div id="dashboardView" style="display:none;">
         <div class="nav-bar">
-            <h2 style="background:none; color:var(--text);">🏥 DoctorDesk <span style="font-size:0.8rem;">| QR‑Full Prescription</span></h2>
+            <h2>🏥 DoctorDesk <span style="font-size:0.8rem;">| e‑Prescription</span></h2>
             <div class="flex">
                 <button id="navNewRx">➕ New Prescription</button>
                 <button id="navHistory">📜 History</button>
@@ -235,7 +236,7 @@
 
         <!-- NEW PRESCRIPTION SECTION -->
         <div id="newRxSection" class="card">
-            <h2>✨ Create New Prescription</h2>
+            <h2 style="color:var(--primary);">✨ Create New Prescription</h2>
             <div class="grid-2">
                 <div>
                     <label>🔍 Search Patient (phone/name)</label>
@@ -355,20 +356,6 @@
         showProfile();
         showSection('newRxSection');
         if(!document.getElementById('rxDate').value) document.getElementById('rxDate').valueAsDate = new Date();
-        // check if we have a prescription ID from URL and auto-show it
-        const urlParams = new URLSearchParams(window.location.search);
-        const prescriptionId = urlParams.get('prescriptionId');
-        if(prescriptionId) {
-            // find prescription and display modal
-            const rx = prescriptions.find(p => p.id === prescriptionId && p.doctorId === currentDoctor.id);
-            if(rx) {
-                showPrescriptionDetail(rx.id);
-            } else {
-                alert('Prescription not found or access denied.');
-            }
-            // remove query param from URL without reloading
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
     }
 
     function renderPatientsList() {
@@ -385,7 +372,7 @@
     function renderPrescriptionsHistory(filter='') {
         let myRx = prescriptions.filter(rx => rx.doctorId === currentDoctor.id);
         if(filter) myRx = myRx.filter(rx => rx.patientName.toLowerCase().includes(filter.toLowerCase()) || rx.patientPhone.includes(filter));
-        let html = '</tr><tr style="background:var(--primary); color:white;"><th>Date</th><th>Patient</th><th>Diagnosis</th><th>Actions</th></tr>';
+        let html = '<table><tr style="background:var(--primary); color:white;"><th>Date</th><th>Patient</th><th>Diagnosis</th><th>Actions</th></tr>';
         myRx.forEach(rx => {
             html += `<tr><td>${rx.date}</td><td>${rx.patientName} (${rx.patientPhone})</td><td>${rx.diagnosis.substring(0,40)}</td>
             <td><button class="viewRxBtn" data-id="${rx.id}" style="background:var(--accent);">View</button></td></tr>`;
@@ -414,7 +401,7 @@
                 <strong>Vitals:</strong> BP:${rx.bp}, Temp:${rx.temp}, Wt:${rx.weight}, Pulse:${rx.pulse}<br>
                 <strong>Allergies:</strong> ${rx.allergies} | <strong>History:</strong> ${rx.history}</p>
                 <h4>💊 Medicines</h4>
-                <table border="1" cellpadding="6" style="width:100%; border-collapse:collapse;"></table><th>Medicine</th><th>Dose</th><th>Timing</th><th>Food</th><th>Days</th><th>Instructions</th></tr>
+                <table border="1" cellpadding="6" style="width:100%; border-collapse:collapse;"><tr><th>Medicine</th><th>Dose</th><th>Timing</th><th>Food</th><th>Days</th><th>Instructions</th></tr>
                 ${rx.medicines.map(m => `<tr><td>${m.name}</td><td>${m.dose}</td><td>${m.timing}</td><td>${m.food}</td><td>${m.days}</td><td>${m.instructions}</td></tr>`).join('')}
                 </table>
                 <h4>🧪 Tests Recommended</h4><p>${rx.tests.map(t=>t.name).join(', ')}</p>
@@ -425,26 +412,19 @@
             </div>
         `;
         document.getElementById('prescriptionViewModal').classList.remove('hidden');
-        
-        // --- ENHANCED QR CODE: full URL to this prescription ---
-        // Build absolute URL with prescriptionId parameter
-        const fullUrl = `${window.location.origin}${window.location.pathname}?prescriptionId=${rx.id}`;
         setTimeout(() => {
-            const qrContainer = document.getElementById(`qrcode-${rx.id}`);
-            qrContainer.innerHTML = ""; // clear previous
-            new QRCode(qrContainer, {
-                text: fullUrl,
-                width: 160,
-                height: 160
+            new QRCode(document.getElementById(`qrcode-${rx.id}`), {
+                text: `Prescription ID: ${rx.id} | Dr. ${doctor.name} | Patient: ${rx.patientName}`,
+                width: 128,
+                height: 128
             });
         }, 100);
-        
         document.getElementById('downloadPDFBtn').onclick = () => {
             let element = document.getElementById('prescriptionOutput');
             html2pdf().from(element).set({ margin: 0.5, filename: `DoctorDesk_Rx_${rx.id}.pdf` }).save();
         };
         document.getElementById('printRxBtn').onclick = () => window.print();
-        document.getElementById('sendEmailBtn').onclick = () => alert(`📧 Demo: Prescription PDF would be sent to patient's phone ${rx.patientPhone} via email/SMS.`);
+        document.getElementById('sendEmailBtn').onclick = () => alert(`📧 Email sent (demo): Prescription PDF would be delivered to patient's phone ${rx.patientPhone} via email/SMS.`);
         document.getElementById('closeModalBtn').onclick = () => document.getElementById('prescriptionViewModal').classList.add('hidden');
     }
 
